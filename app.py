@@ -1,65 +1,109 @@
+import os
+os.environ['GLOG_minloglevel'] = '2'  # Suppresses INFO and WARNING messages
+
 import cv2
 import mediapipe as mp
-from controller import Controller
+from controller import Controller  # Assuming Controller is in controller.py
+import pyautogui
+from collections import deque
+import numpy as np
 
+# Initialize video capture and hand tracking
 cap = cv2.VideoCapture(0)
-
 mpHands = mp.solutions.hands
-hands = mpHands.Hands()
+hands = mpHands.Hands(max_num_hands=1, min_detection_confidence=0.7, min_tracking_confidence=0.7)
 mpDraw = mp.solutions.drawing_utils
 
+# Create Controller instance
+controller = Controller()
 
-# Smoothing parameters
-smoothening = 13
-plocX, plocY = 0, 0
-clocX, clocY = 0, 0
+# Enhanced smoothing parameters
+SMOOTHING_FACTOR = 15  # Increased for smoother movement
+POS_HISTORY_LENGTH = 10  # Longer history for more stable averaging
+pos_history = deque(maxlen=POS_HISTORY_LENGTH)
+prev_x, prev_y = 0, 0
 
+# Frame rate control
+TARGET_FPS = 60  # Higher FPS for smoother cursor updates
+frame_time = 1 / TARGET_FPS
+
+def smooth_coordinates(x, y):
+    """Apply enhanced exponential moving average smoothing"""
+    global prev_x, prev_y
+    alpha = 0.15  # Lower alpha for smoother, less responsive movement (adjustable: 0.1-0.3)
+    smooth_x = alpha * x + (1 - alpha) * prev_x
+    smooth_y = alpha * y + (1 - alpha) * prev_y
+    prev_x, prev_y = smooth_x, smooth_y
+    return smooth_x, smooth_y
 
 while True:
-   success, img = cap.read()
-   img = cv2.flip(img, 1)
+    start_time = cv2.getTickCount()
+    
+    success, img = cap.read()
+    if not success:
+        print("Failed to read from camera.")
+        break
+        
+    img = cv2.flip(img, 1)
+    imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    results = hands.process(imgRGB)
 
-   imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-   results = hands.process(imgRGB)
-
-   if results.multi_hand_landmarks:
-        Controller.hand_Landmarks = results.multi_hand_landmarks[0]
-        Controller.img_shape = img.shape
-        mpDraw.draw_landmarks(img, Controller.hand_Landmarks, mpHands.HAND_CONNECTIONS)
-
-
-        for id, lm in enumerate(Controller.hand_Landmarks.landmark):
+    if results.multi_hand_landmarks:
+        controller.hand_landmarks = results.multi_hand_landmarks[0]
+        controller.img_shape = img.shape
+        
+        # Draw landmarks
+        mpDraw.draw_landmarks(img, controller.hand_landmarks, mpHands.HAND_CONNECTIONS)
+        
+        # Label landmarks (optional - comment out for final version)
+        for id, lm in enumerate(controller.hand_landmarks.landmark):
             h, w, c = img.shape
             cx, cy = int(lm.x * w), int(lm.y * h)
             cv2.putText(img, str(id), (cx, cy), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1, cv2.LINE_AA)
 
-        Controller.update_fingers_status()
-        
-        # Get the tip of the index finger
-        x1, y1 = Controller.hand_Landmarks.landmark[8].x, Controller.hand_Landmarks.landmark[8].y
+        # Update finger states
+        controller.update_fingers_status()
+
+        # Get index finger tip position
+        x1 = controller.hand_landmarks.landmark[8].x
+        y1 = controller.hand_landmarks.landmark[8].y
         h, w, c = img.shape
         x1, y1 = int(x1 * w), int(y1 * h)
+
+        # Apply enhanced smoothing
+        smooth_x, smooth_y = smooth_coordinates(x1, y1)
+        pos_history.append((smooth_x, smooth_y))
         
-        # Smoothen the cursor movement
-        clocX = plocX + (x1 - plocX) / smoothening
-        clocY = plocY + (y1 - plocY) / smoothening
-        
-        # Move the cursor
-        Controller.cursor_moving(clocX, clocY)
-        
-        # Update previous location
-        plocX, plocY = clocX, clocY
-        
-        Controller.update_fingers_status()
-        Controller.cursor_moving(clocX, clocY)
+        # Use weighted average of recent positions for extra smoothness
+        if len(pos_history) == POS_HISTORY_LENGTH:
+            weights = np.linspace(0.5, 1.0, POS_HISTORY_LENGTH)  # Newer positions weighted more
+            avg_x = np.average([pos[0] for pos in pos_history], weights=weights)
+            avg_y = np.average([pos[1] for pos in pos_history], weights=weights)
+            
+            # Update cursor position with smoothed coordinates
+            controller.cursor_moving(avg_x, avg_y)
+            
+            # Additional control functions
+            controller.detect_clicking()
+            controller.detect_dragging()
+            controller.detect_scrolling()
+            controller.detect_zooming()
+            
+            
+            # Update and display gesture description
+            controller.update_gesture_description()
+            cv2.putText(img, controller.gesture_description, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 
+                    1, (0, 255, 0), 2, cv2.LINE_AA)
+
+    # Show frame
+    cv2.imshow('Hand Tracker', img)
     
-        # Display the gesture description
-        cv2.putText(img, Controller.gesture_description, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
-
-   cv2.imshow('Hand Tracker', img)
-   if cv2.waitKey(5) & 0xff == 27:
-      break
-
+    # Frame rate control
+    end_time = cv2.getTickCount()
+    elapsed = (end_time - start_time) / cv2.getTickFrequency()
+    sleep_time = max(0, frame_time - elapsed)
+    if cv2.waitKey(max(1, int(sleep_time * 1000))) & 0xFF == 27:  # ESC to exit
+        break
 
 cap.release()
 cv2.destroyAllWindows()
