@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand Tracking Virtual Mouse</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #fff;
+            text-align: center;
+        }
+        header {
+            background: linear-gradient(135deg, #007BFF, #00D4FF);
+            padding: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1e1e1e;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(0, 212, 255, 0.3);
+        }
+        h1 {
+            color: #00D4FF;
+        }
+        p {
+            font-size: 18px;
+            color: #ddd;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 10px;
+            font-size: 18px;
+            color: white;
+            background: #007BFF;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        nav {
+            background: #222;
+            padding: 15px;
+            text-align: center;
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 14px 20px;
+            display: inline-block;
+        }
+        nav a:hover {
+            background: #007BFF;
+            border-radius: 5px;
+        }
+        .video-container {
+            margin: 30px auto;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    Hand Tracking Virtual Mouse 🖐️
+</header>
+
+<nav>
+    <a href="#about">About</a>
+    <a href="#features">Features</a>
+    <a href="#manual">Manual</a>
+    <a href="#download">Download</a>
+    <a href="#demo">Demo</a>
+</nav>
+
+<div class="container">
+    <h1>Control Your Computer with Hand Gestures</h1>
+    <p>No mouse? No problem! Use your hand movements to control the cursor, click, scroll, and zoom.</p>
+    <a href="#download" class="btn">Get Started</a>
+</div>
+
+<!-- About Section -->
+<div class="container" id="about">
+    <h1>Our Team</h1>
+    <p>Hung, Nhu, Tran, Nhat, Dung</p>
+    <img src="PLACEHOLDER_team.jpg" alt="Our Team">
+</div>
+
+<!-- Features Section -->
+<div class="container" id="features">
+    <h1>Features</h1>
+    <p>Our system supports various hand gestures to control your computer effortlessly.</p>
+
+    <h2> Cursor Movement</h2>
+    <img src="move.png" alt="Moving Cursor">
+    <p>Move your hand to control the cursor smoothly.</p>
+
+    <h2> Left Click</h2>
+    <img src="left_click.png" alt="Click Functions">
+    <p>Use thumb & index finger gestures to perform different clicks.</p>
+
+    <h2> Right Click</h2>
+    <img src="right_click.png" alt="Click Functions">
+    <p>Use thumb & middle finger gestures to perform different clicks.</p>
+
+    <h2> Double Click</h2>
+    <img src="double_click.png" alt="Click Functions">
+    <p>Use thumb & ring finger gestures to perform different clicks.</p>
+
+    <h2> Scrolling up</h2>
+    <img src="up_scroll.png" alt="Scrolling">
+    <p>Scroll up and down by raising your pinky.</p>
+
+    <h2> Scrolling down</h2>
+    <img src="down_scroll.png" alt="Scrolling">
+    <p>Scroll up and down by raising your index finger and thumb.</p>
+
+    <h2> Zoom in</h2>
+    <img src="zoom_in.png" alt="Zooming">
+    <p>Zoom in by raising and opening your index and middle fingers.</p>
+
+    <h2> Zoom out</h2>
+    <img src="zoom_out.png" alt="Zooming">
+    <p>Zoom out by raising and closing your index and middle fingers.</p>
+
+    <h2> Drag & Drop</h2>
+    <img src="drag.png" alt="Drag & Drop">
+    <p>Hold all fingers down to drag items, lift to drop.</p>
+</div>
+
+<!-- Installation Manual -->
+<div class="container" id="manual">
+    <h1>Installation Guide</h1>
+    <p>Follow these simple steps to set up the Hand Tracking Virtual Mouse:</p>
+
+    <h2>1️⃣ Install Required Packages</h2>
+    <p>Run this in your terminal:</p>
+    <code>pip install opencv-python mediapipe pyautogui</code>
+
+    <h2>2️⃣ Run the Application</h2>
+    <p>Execute the following command:</p>
+    <code>python app.py</code>
+
+    <img src="PLACEHOLDER_install.jpg" alt="Installation Guide">
+</div>
+
+<!-- Download Section -->
+<div class="container" id="download">
+    <h1>Download the Code</h1>
+    <p>Get the Python scripts required to run the application.</p>
+    <a href="app.py" class="btn">Download app.py</a>
+    <a href="controller.py" class="btn">Download controller.py</a>
+</div>
+
+<!-- Demo Video -->
+<div class="container video-container" id="demo">
+    <h1>See it in Action 🎬</h1>
+    <p>Watch how easy it is to control your computer with hand gestures.</p>
+    <video width="800" controls>
+        <source src="PLACEHOLDER_video.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+</div>
+
+</body>
+</html>
