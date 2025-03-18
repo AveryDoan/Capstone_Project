@@ -65,6 +65,7 @@ class Controller:
         self.ring_finger_within_thumb = (self.hand_landmarks.landmark[16].y > self.hand_landmarks.landmark[4].y and 
                                        self.hand_landmarks.landmark[16].y < self.hand_landmarks.landmark[2].y)
 
+    #Changes 1
     def get_position(self, hand_x_position, hand_y_position):
         # Convert to screen coordinates with boundary protection
         x3 = np.interp(hand_x_position, 
@@ -100,6 +101,8 @@ class Controller:
         if not cursor_freezed:
             pyautogui.moveTo(x, y, duration=0)
 
+    #Changes 2
+
     def detect_scrolling(self):
         scroll_step = 20  # Smaller steps for bit-by-bit scrolling (adjustable)
         scroll_cooldown = 0.5  # Time in seconds between scroll steps
@@ -129,7 +132,7 @@ class Controller:
             pyautogui.scroll(-scroll_step)  # Scroll down
             self.gesture_description = "Scrolling DOWN"
             self._last_scroll_time = current_time
-
+#Change 3
     def detect_zooming(self):
         # Zoom in: index and middle fingers up, ring and little fingers down
         zooming_in = (self.index_finger_up and self.middle_finger_up and 
