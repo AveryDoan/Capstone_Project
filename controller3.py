@@ -65,27 +65,61 @@ class Controller:
         self.ring_finger_within_thumb = (self.hand_landmarks.landmark[16].y > self.hand_landmarks.landmark[4].y and 
                                        self.hand_landmarks.landmark[16].y < self.hand_landmarks.landmark[2].y)
 
-    def get_position(self, hand_x_position, hand_y_position):
-        # Convert to screen coordinates with boundary protection
-        x3 = np.interp(hand_x_position, 
-                      (self.frame_reduction/self.cam_width, 1-self.frame_reduction/self.cam_width), 
-                      (0, self.screen_width))
-        y3 = np.interp(hand_y_position, 
-                      (self.frame_reduction/self.cam_height, 1-self.frame_reduction/self.cam_height), 
-                      (0, self.screen_height))
-        
-        # Smoothen values
-        curr_x = self.prev_x + (x3 - self.prev_x) / self.smoothening
-        curr_y = self.prev_y + (y3 - self.prev_y) / self.smoothening
-        
-        # Update previous positions
-        self.prev_x, self.prev_y = curr_x, curr_y
-        
-        # Ensure within screen bounds
-        curr_x = max(0, min(curr_x, self.screen_width))
-        curr_y = max(0, min(curr_y, self.screen_height))
-        
-        return int(curr_x), int(curr_y)
+    def get_position(self, hand_result):
+            """
+            It tracks your hand, maps it to the screen, dampens small jitters, smooths motion, and keeps the cursor on-screen
+            
+            Combines distance-based damping with low-pass filtering for smooth, responsive motion.
+            
+            Args:
+                hand_result: Hand tracking result with landmark data.
+            
+            Returns:
+                tuple(int, int): Smoothed (x, y) cursor coordinates.
+            """
+            # Extract hand position (using landmark 9, like first function)
+            point = 9
+            hand_x = hand_result.landmark[point].x  # Normalized 0-1
+            hand_y = hand_result.landmark[point].y  # Normalized 0-1
+
+            # Map to screen coordinates with frame reduction (like second function)
+            x_mapped = np.interp(hand_x,
+                                (self.frame_reduction / self.cam_width, 1 - self.frame_reduction / self.cam_width),
+                                (0, self.screen_width))
+            y_mapped = np.interp(hand_y,
+                                (self.frame_reduction / self.cam_height, 1 - self.frame_reduction / self.cam_height),
+                                (0, self.screen_height))
+
+            # Initialize previous hand position if None
+            if self.prev_hand_x is None or self.prev_hand_y is None:
+                self.prev_hand_x, self.prev_hand_y = x_mapped, y_mapped
+
+            # Calculate movement delta (like first function)
+            delta_x = x_mapped - self.prev_hand_x
+            delta_y = y_mapped - self.prev_hand_y
+            distsq = delta_x**2 + delta_y**2
+
+            # Distance-based ratio (inspired by first function, tuned for smoother feel)
+            if distsq <= 25:  # Small movements: heavy damping
+                ratio = 0
+            elif distsq <= 900:  # Medium movements: proportional scaling
+                ratio = 0.05 * (distsq ** 0.5)  # Reduced from 0.07 for smoother transitions
+            else:  # Large movements: cap for control
+                ratio = 1.5  # Reduced from 2.1 to avoid overshooting
+
+            # Apply low-pass filter (like second function) with distance-based adjustment
+            curr_x = self.prev_x + (delta_x * ratio) / self.smoothening
+            curr_y = self.prev_y + (delta_y * ratio) / self.smoothening
+
+            # Update previous positions
+            self.prev_x, self.prev_y = curr_x, curr_y
+            self.prev_hand_x, self.prev_hand_y = x_mapped, y_mapped
+
+            # Ensure within screen bounds (like second function)
+            curr_x = max(0, min(curr_x, self.screen_width))
+            curr_y = max(0, min(curr_y, self.screen_height))
+
+            return int(curr_x), int(curr_y)
 
     def cursor_moving(self, x=None, y=None):
         if not self.hand_landmarks:
