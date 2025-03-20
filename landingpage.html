@@ -5,72 +5,268 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hand Tracking Virtual Mouse</title>
     <style>
+        /* Improved styling for better aesthetics */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        
+        :root {
+            --primary: #007BFF;
+            --primary-light: #00D4FF;
+            --dark: #121212;
+            --dark-light: #1e1e1e;
+            --text: #ffffff;
+            --text-light: #dddddd;
+        }
+        
+        * {
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+        
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Poppins', sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #121212;
-            color: #fff;
+            background-color: var(--dark);
+            color: var(--text);
             text-align: center;
+            line-height: 1.6;
         }
+        
         header {
-            background: linear-gradient(135deg, #007BFF, #00D4FF);
-            padding: 20px;
-            font-size: 24px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            padding: 25px;
+            font-size: 28px;
             font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+            position: relative;
+            overflow: hidden;
         }
-        .container {
-            max-width: 900px;
-            margin: 50px auto;
-            padding: 20px;
-            background: #1e1e1e;
-            border-radius: 10px;
-            box-shadow: 0px 0px 15px rgba(0, 212, 255, 0.3);
+        
+        header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            transform: rotate(30deg);
+            z-index: 1;
         }
-        h1 {
-            color: #00D4FF;
-        }
-        p {
-            font-size: 18px;
-            color: #ddd;
-        }
-        .btn {
-            display: inline-block;
-            padding: 12px 24px;
-            margin: 10px;
-            font-size: 18px;
-            color: white;
-            background: #007BFF;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: 0.3s;
-        }
-        .btn:hover {
-            background: #0056b3;
-        }
-        img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
+        
         nav {
-            background: #222;
+            background: rgba(34, 34, 34, 0.95);
             padding: 15px;
             text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+        
         nav a {
             color: white;
             text-decoration: none;
             padding: 14px 20px;
             display: inline-block;
-        }
-        nav a:hover {
-            background: #007BFF;
+            margin: 0 10px;
             border-radius: 5px;
+            font-weight: 500;
+            position: relative;
         }
+        
+        nav a:hover {
+            background: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 123, 255, 0.2);
+        }
+        
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background: var(--primary-light);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+        
+        nav a:hover::after {
+            width: 70%;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 30px;
+            background: var(--dark-light);
+            border-radius: 15px;
+            box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.4);
+            transform: translateY(0);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .container:hover {
+            box-shadow: 0px 15px 35px rgba(0, 212, 255, 0.4);
+            transform: translateY(-5px);
+        }
+        
+        h1 {
+            color: var(--primary-light);
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        h2 {
+            color: var(--primary);
+            font-size: 1.8rem;
+            margin: 30px 0 15px;
+            border-bottom: 2px solid rgba(0, 123, 255, 0.3);
+            padding-bottom: 10px;
+            display: inline-block;
+        }
+        
+        p {
+            font-size: 18px;
+            color: var(--text-light);
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 15px 28px;
+            margin: 15px;
+            font-size: 18px;
+            color: white;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            box-shadow: 0 8px 15px rgba(0, 123, 255, 0.3);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .btn:hover {
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(0, 123, 255, 0.5);
+        }
+        
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+        
+        .btn:hover::after {
+            left: 100%;
+        }
+        
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            margin: 25px 0;
+            box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.7);
+            cursor: pointer;
+            transform: scale(1);
+            transition: transform 0.5s ease, box-shadow 0.5s ease;
+        }
+        
+        img:hover {
+            transform: scale(1.03);
+            box-shadow: 0px 12px 25px rgba(0, 212, 255, 0.5);
+        }
+        
+        .feature-card {
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 12px;
+            background: rgba(30, 30, 30, 0.6);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 123, 255, 0.3);
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(to right, var(--primary), var(--primary-light));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.5s ease;
+        }
+        
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        code {
+            display: block;
+            padding: 15px;
+            margin: 20px 0;
+            background: #272822;
+            color: #f8f8f2;
+            border-radius: 5px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+            font-family: 'Courier New', monospace;
+            text-align: left;
+            overflow-x: auto;
+            border-left: 4px solid var(--primary);
+        }
+        
         .video-container {
-            margin: 30px auto;
+            margin: 40px auto;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        video {
+            width: 100%;
+            border-radius: 12px;
+        }
+        
+        /* Smooth scrolling behavior */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Animation for elements */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
+        }
+        
+        .animate-on-scroll.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
     </style>
 </head>
@@ -95,10 +291,10 @@
 </div>
 
 <!-- About Section -->
-<div class="container" id="about">
+<div class="container animate-on-scroll" id="about">
     <h1>Our Team</h1>
     <p>Hung, Nhu, Tran, Nhat, Dung</p>
-    <img src="PLACEHOLDER_team.jpg" alt="Our Team">
+    <img src="https://media-public.canva.com/XYisA/MAFIQuXYisA/1/tl.png" alt="Our Team">
 </div>
 
 <!-- Features Section -->
@@ -106,45 +302,63 @@
     <h1>Features</h1>
     <p>Our system supports various hand gestures to control your computer effortlessly.</p>
 
-    <h2> Cursor Movement</h2>
-    <img src="move.png" alt="Moving Cursor">
-    <p>Move your hand to control the cursor smoothly.</p>
+    <div class="feature-card animate-on-scroll">
+        <h2>Cursor Movement</h2>
+        <img src="move.png" alt="Moving Cursor">
+        <p>Move your hand to control the cursor smoothly.</p>
+    </div>
 
-    <h2> Left Click</h2>
-    <img src="left_click.png" alt="Click Functions">
-    <p>Use thumb & index finger gestures to perform different clicks.</p>
+    <div class="feature-card animate-on-scroll">
+        <h2>Left Click</h2>
+        <img src="left_click.png" alt="Left Click Functions">
+        <p>Use index finger gestures to perform different clicks.</p>
+    </div>
 
-    <h2> Right Click</h2>
-    <img src="right_click.png" alt="Click Functions">
-    <p>Use thumb & middle finger gestures to perform different clicks.</p>
+    <div class="feature-card animate-on-scroll">
+        <h2>Right Click</h2>
+        <img src="right_click.png" alt="Right Click Functions">
+        <p>Use middle finger gestures to perform different clicks.</p>
+    </div>
 
-    <h2> Double Click</h2>
-    <img src="double_click.png" alt="Click Functions">
-    <p>Use thumb & ring finger gestures to perform different clicks.</p>
+    <div class="feature-card animate-on-scroll">
+        <h2>Double Click</h2>
+        <img src="double_click.png" alt="Double Click Functions">
+        <p>Use ring finger gestures to perform different clicks.</p>
+    </div>
 
-    <h2> Scrolling up</h2>
-    <img src="up_scroll.png" alt="Scrolling">
-    <p>Scroll up and down by raising your pinky.</p>
+    <div class="feature-card animate-on-scroll">
+        <h2>Scrolling up</h2>
+        <img src="up_scroll.png" alt="Scrolling">
+        <p>Scroll down by raising your pinky.</p>
+    </div>
 
-    <h2> Scrolling down</h2>
-    <img src="down_scroll.png" alt="Scrolling">
-    <p>Scroll up and down by raising your index finger and thumb.</p>
+    <div class="feature-card animate-on-scroll">
+        <h2>Scrolling down</h2>
+        <img src="down_scroll.png" alt="Scrolling">
+        <p>Scroll up by raising your index finger.</p>
+    </div>
 
-    <h2> Zoom in</h2>
-    <img src="zoom_in.png" alt="Zooming">
-    <p>Zoom in by raising and opening your index and middle fingers.</p>
+    <div class="feature-card animate-on-scroll">
+        <h2>Zoom in</h2>
+        <img src="zoom_in.png" alt="Zooming">
+        <p>Zoom in by raising your index and middle fingers.</p>
+    </div>
 
-    <h2> Zoom out</h2>
-    <img src="zoom_out.png" alt="Zooming">
-    <p>Zoom out by raising and closing your index and middle fingers.</p>
+    <div class="feature-card animate-on-scroll">
+        <h2>Zoom out</h2>
+        <img src="zoom_out.png" alt="Zooming">
+        <p>Zoom out by raising your index and pinky fingers.</p>
+    </div>
 
-    <h2> Drag & Drop</h2>
-    <img src="drag.png" alt="Drag & Drop">
-    <p>Hold all fingers down to drag items, lift to drop.</p>
+    <div class="feature-card animate-on-scroll">
+        <h2>Drag & Drop</h2>
+        <img src="drag.png" alt="Drag & Drop">
+        <p>Hold all fingers down to drag items, lift to drop.</p>
+    </div>
 </div>
 
 <!-- Installation Manual -->
-<div class="container" id="manual">
+<div class="container animate-on-scroll" id="manual">
     <h1>Installation Guide</h1>
     <p>Follow these simple steps to set up the Hand Tracking Virtual Mouse:</p>
 
@@ -155,20 +369,18 @@
     <h2>2️⃣ Run the Application</h2>
     <p>Execute the following command:</p>
     <code>python app.py</code>
-
-    <img src="PLACEHOLDER_install.jpg" alt="Installation Guide">
 </div>
 
 <!-- Download Section -->
-<div class="container" id="download">
+<div class="container animate-on-scroll" id="download">
     <h1>Download the Code</h1>
     <p>Get the Python scripts required to run the application.</p>
-    <a href="app.py" class="btn">Download app.py</a>
-    <a href="controller.py" class="btn">Download controller.py</a>
+    <a href="app3.py" class="btn" download>Download app.py</a>
+    <a href="controller3.py" class="btn" download>Download controller.py</a>
 </div>
 
 <!-- Demo Video -->
-<div class="container video-container" id="demo">
+<div class="container video-container animate-on-scroll" id="demo">
     <h1>See it in Action 🎬</h1>
     <p>Watch how easy it is to control your computer with hand gestures.</p>
     <video width="800" controls>
@@ -177,5 +389,39 @@
     </video>
 </div>
 
+<!-- Add JavaScript for animations and interactivity -->
+<script>
+    // Function to check if element is in viewport
+    function isElementInViewport(el) {
+        const rect = el.getBoundingClientRect();
+        return (
+            rect.top <= (window.innerHeight || document.documentElement.clientHeight) * 0.8 &&
+            rect.bottom >= 0
+        );
+    }
+    
+    // Function to handle scroll animations
+    function handleScroll() {
+        const elements = document.querySelectorAll('.animate-on-scroll');
+        elements.forEach(element => {
+            if (isElementInViewport(element)) {
+                element.classList.add('visible');
+            }
+        });
+    }
+    
+    // Add event listeners
+    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('load', handleScroll);
+    window.addEventListener('resize', handleScroll);
+    
+    // Handle image zooming
+    const images = document.querySelectorAll('img');
+    images.forEach(img => {
+        img.addEventListener('click', function() {
+            this.style.transform = this.style.transform === 'scale(1.15)' ? 'scale(1)' : 'scale(1.15)';
+        });
+    });
+</script>
 </body>
 </html>
