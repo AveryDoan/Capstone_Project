@@ -3,7 +3,7 @@ os.environ['GLOG_minloglevel'] = '2'  # Suppresses INFO and WARNING messages
 
 import cv2
 import mediapipe as mp
-from controller import Controller  # Assuming Controller is in controller.py
+from controller3 import Controller  # Assuming Controller is in controller.py
 import pyautogui
 from collections import deque
 import numpy as np
