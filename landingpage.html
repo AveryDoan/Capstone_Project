@@ -8,6 +8,38 @@
         /* Improved styling for better aesthetics */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
         
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark);
+            color: var(--text);
+            text-align: center;
+            line-height: 1.6;
+            position: relative;
+        }
+
+        /* Background video styling */
+        #background-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.15;
+            z-index: -1;
+        }
+
+        :root {
+            --primary: #007BFF;
+            --primary-light: #00D4FF;
+            --dark: #121212;
+            --dark-light: #1e1e1e;
+            --text: #ffffff;
+            --text-light: #dddddd;
+        }
+
         :root {
             --primary: #007BFF;
             --primary-light: #00D4FF;
@@ -271,6 +303,9 @@
     </style>
 </head>
 <body>
+    <video id="background-video" autoplay muted loop playsinline>
+        <source src="CAPSTONE.mp4" type="video/mp4">
+    </video>
 
 <header>
     Hand Tracking Virtual Mouse 🖐️
