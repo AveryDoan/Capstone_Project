@@ -1,8 +1,9 @@
 import pyautogui
 import time
+import numpy as np
 
 class Controller:
-    def __init__(self):
+    def __init__(self, cam_width, cam_height, frame_reduction):
         self.prev_hand = None
         self.right_clicked = False
         self.left_clicked = False
@@ -27,6 +28,10 @@ class Controller:
         self.ring_finger_within_thumb = None
         self.screen_width, self.screen_height = pyautogui.size()
         self.gesture_description = "Tracking"  # Instance attribute
+        self.smoothening = 7  # Add smoothening factor
+        self.cam_width = cam_width
+        self.cam_height = cam_height
+        self.frame_reduction = frame_reduction
 
     def update_fingers_status(self):
         if not self.hand_landmarks:
@@ -60,24 +65,61 @@ class Controller:
         self.ring_finger_within_thumb = (self.hand_landmarks.landmark[16].y > self.hand_landmarks.landmark[4].y and 
                                        self.hand_landmarks.landmark[16].y < self.hand_landmarks.landmark[2].y)
 
-    def get_position(self, hand_x_position, hand_y_position):
-        old_x, old_y = pyautogui.position()
-        current_x = int(hand_x_position * self.screen_width)
-        current_y = int(hand_y_position * self.screen_height)
+    def get_position(self, hand_result):
+            """
+            It tracks your hand, maps it to the screen, dampens small jitters, smooths motion, and keeps the cursor on-screen
+            
+            Combines distance-based damping with low-pass filtering for smooth, responsive motion.
+            
+            Args:
+                hand_result: Hand tracking result with landmark data.
+            
+            Returns:
+                tuple(int, int): Smoothed (x, y) cursor coordinates.
+            """
+            # Extract hand position (using landmark 9, like first function)
+            point = 9
+            hand_x = hand_result.landmark[point].x  # Normalized 0-1
+            hand_y = hand_result.landmark[point].y  # Normalized 0-1
 
-        ratio = 1
-        self.prev_hand = (current_x, current_y) if self.prev_hand is None else self.prev_hand
-        delta_x = current_x - self.prev_hand[0]
-        delta_y = current_y - self.prev_hand[1]
-        
-        self.prev_hand = [current_x, current_y]
-        current_x, current_y = old_x + delta_x * ratio, old_y + delta_y * ratio
+            # Map to screen coordinates with frame reduction (like second function)
+            x_mapped = np.interp(hand_x,
+                                (self.frame_reduction / self.cam_width, 1 - self.frame_reduction / self.cam_width),
+                                (0, self.screen_width))
+            y_mapped = np.interp(hand_y,
+                                (self.frame_reduction / self.cam_height, 1 - self.frame_reduction / self.cam_height),
+                                (0, self.screen_height))
 
-        threshold = 5
-        current_x = max(threshold, min(current_x, self.screen_width - threshold))
-        current_y = max(threshold, min(current_y, self.screen_height - threshold))
+            # Initialize previous hand position if None
+            if self.prev_hand_x is None or self.prev_hand_y is None:
+                self.prev_hand_x, self.prev_hand_y = x_mapped, y_mapped
 
-        return (current_x, current_y)
+            # Calculate movement delta (like first function)
+            delta_x = x_mapped - self.prev_hand_x
+            delta_y = y_mapped - self.prev_hand_y
+            distsq = delta_x**2 + delta_y**2
+
+            # Distance-based ratio (inspired by first function, tuned for smoother feel)
+            if distsq <= 25:  # Small movements: heavy damping
+                ratio = 0
+            elif distsq <= 900:  # Medium movements: proportional scaling
+                ratio = 0.05 * (distsq ** 0.5)  # Reduced from 0.07 for smoother transitions
+            else:  # Large movements: cap for control
+                ratio = 1.5  # Reduced from 2.1 to avoid overshooting
+
+            # Apply low-pass filter (like second function) with distance-based adjustment
+            curr_x = self.prev_x + (delta_x * ratio) / self.smoothening
+            curr_y = self.prev_y + (delta_y * ratio) / self.smoothening
+
+            # Update previous positions
+            self.prev_x, self.prev_y = curr_x, curr_y
+            self.prev_hand_x, self.prev_hand_y = x_mapped, y_mapped
+
+            # Ensure within screen bounds (like second function)
+            curr_x = max(0, min(curr_x, self.screen_width))
+            curr_y = max(0, min(curr_y, self.screen_height))
+
+            return int(curr_x), int(curr_y)
 
     def cursor_moving(self, x=None, y=None):
         if not self.hand_landmarks:
@@ -93,7 +135,6 @@ class Controller:
             pyautogui.moveTo(x, y, duration=0)
 
     def detect_scrolling(self):
-        """Detect and perform gradual scrolling"""
         scroll_step = 20  # Smaller steps for bit-by-bit scrolling (adjustable)
         scroll_cooldown = 0.5  # Time in seconds between scroll steps
         current_time = time.time()
@@ -105,38 +146,43 @@ class Controller:
         if current_time - self._last_scroll_time < scroll_cooldown:
             return
 
-        scrolling_up = (self.little_finger_up and self.index_finger_down and 
-                      self.middle_finger_down and self.ring_finger_down)
-        if scrolling_up:
-            pyautogui.scroll(scroll_step)  # Smaller positive value for gradual up
+        # Scrolling up: middle, ring, and little fingers down, index finger up
+        scroll_up_condition = (self.middle_finger_down and self.ring_finger_down and 
+                               self.little_finger_down and self.index_finger_up)
+
+        # Scrolling down: index, middle, and ring fingers down, little finger up
+        scroll_down_condition = (self.index_finger_down and self.middle_finger_down and 
+                                 self.ring_finger_down and self.little_finger_up)
+
+        if scroll_up_condition:
+            pyautogui.scroll(scroll_step)  # Scroll up
             self.gesture_description = "Scrolling UP"
             self._last_scroll_time = current_time
 
-        scrolling_down = (self.index_finger_up and self.middle_finger_down and 
-                        self.ring_finger_down and self.little_finger_down)
-        if scrolling_down:
-            pyautogui.scroll(-scroll_step)  # Smaller negative value for gradual down
+        elif scroll_down_condition:
+            pyautogui.scroll(-scroll_step)  # Scroll down
             self.gesture_description = "Scrolling DOWN"
             self._last_scroll_time = current_time
 
-    def detect_zooming(self):  # Fixed typo in method name
-        zooming = (self.index_finger_up and self.middle_finger_up and 
-                  self.ring_finger_down and self.little_finger_down)
-        window = 0.05
-        index_touches_middle = abs(self.hand_landmarks.landmark[8].x - self.hand_landmarks.landmark[12].x) <= window
-        zooming_out = zooming and index_touches_middle
-        zooming_in = zooming and not index_touches_middle
+    def detect_zooming(self):
+        # Zoom in: index and middle fingers up, ring and little fingers down
+        zooming_in = (self.index_finger_up and self.middle_finger_up and 
+                     self.ring_finger_down and self.little_finger_down)
+        
+        # Zoom out: index and little fingers up, middle and ring fingers down
+        zooming_out = (self.index_finger_up and self.little_finger_up and 
+                      self.middle_finger_down and self.ring_finger_down)
         
         if zooming_out:
-            pyautogui.keyDown('ctrl')
-            pyautogui.scroll(-50)
-            pyautogui.keyUp('ctrl')
+            pyautogui.keyDown('command')
+            pyautogui.press('-')
+            pyautogui.keyUp('command')
             self.gesture_description = "Zooming Out"
 
         if zooming_in:
-            pyautogui.keyDown('ctrl')
-            pyautogui.scroll(50)
-            pyautogui.keyUp('ctrl')
+            pyautogui.keyDown('command')
+            pyautogui.press('+')
+            pyautogui.keyUp('command')
             self.gesture_description = "Zooming In"
 
     def detect_clicking(self):
@@ -183,7 +229,7 @@ class Controller:
             self.dragging = False
 
     def update_gesture_description(self):
-        """Update gesture description based on current state"""
+        """Update gesture description based on current state and actions"""
         if self.dragging:
             self.gesture_description = "Dragging"
         elif self.left_clicked:
@@ -192,7 +238,26 @@ class Controller:
             self.gesture_description = "Right Click"
         elif self.double_clicked:
             self.gesture_description = "Double Click"
+        elif self.all_fingers_up and self.thumb_finger_down:
+            self.gesture_description = "Cursor Frozen"
+        elif self.all_fingers_down:
+            self.gesture_description = "Ready to Drag"
+        elif self.index_finger_up and self.middle_finger_up and self.ring_finger_down and self.little_finger_down:
+            self.gesture_description = "Ready to Zoom In"
+        elif self.index_finger_up and self.little_finger_up and self.middle_finger_down and self.ring_finger_down:
+            self.gesture_description = "Ready to Zoom Out"
+        elif self.middle_finger_down and self.ring_finger_down and self.little_finger_down and self.index_finger_up:
+            self.gesture_description = "Scrolling UP"
+        elif self.index_finger_down and self.middle_finger_down and self.ring_finger_down and self.little_finger_up:
+            self.gesture_description = "Scrolling DOWN"
         else:
             self.gesture_description = "Tracking"
-            
-        
+
+    def print_finger_status(self):
+        """Print the status of each finger (up or down)"""
+        print(f"Little Finger: {'Down' if self.little_finger_down else 'Up'}")
+        print(f"Ring Finger: {'Down' if self.ring_finger_down else 'Up'}")
+        print(f"Middle Finger: {'Down' if self.middle_finger_down else 'Up'}")
+        print(f"Index Finger: {'Down' if self.index_finger_down else 'Up'}")
+        print(f"Thumb Finger: {'Down' if self.thumb_finger_down else 'Up'}")
+
